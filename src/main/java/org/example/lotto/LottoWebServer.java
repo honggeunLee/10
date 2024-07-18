@@ -19,7 +19,7 @@ public class LottoWebServer {
                     // Read request headers
                     String requestLine = in.readLine();
                     if (requestLine == null) {
-                        continue; // If the client sends an empty request, ignore
+                        continue;
                     }
 
                     // Parse request to get the HTTP method and path
@@ -29,8 +29,8 @@ public class LottoWebServer {
 
                     // Check if it's a GET request and handle accordingly
                     if ("GET".equalsIgnoreCase(httpMethod)) {
-                        if ("/lotto".equalsIgnoreCase(path)) {
-                            handleLottoRequest(out);
+                        if (path.startsWith("/lotto")) {
+                            handleLottoRequest(path, out);
                         } else {
                             handleNotFoundResponse(out);
                         }
@@ -47,8 +47,23 @@ public class LottoWebServer {
         }
     }
 
-    private static void handleLottoRequest(PrintWriter out) {
-        int numGames = 1; // Assuming one game for simplicity
+    private static void handleLottoRequest(String path, PrintWriter out) {
+        // Default to 1 game if no number is provided
+        int numGames = 1;
+
+        // Extract number from query string if present
+        if (path.contains("?")) {
+            String query = path.split("\\?")[1];
+            if (query.startsWith("num=")) {
+                try {
+                    numGames = Integer.parseInt(query.substring(4));
+                } catch (NumberFormatException e) {
+                    // Default to 1 if parsing fails
+                    numGames = 1;
+                }
+            }
+        }
+
         StringBuilder lottoNumbers = new StringBuilder();
 
         for (int i = 0; i < numGames; i++) {
@@ -58,7 +73,7 @@ public class LottoWebServer {
         // Write HTTP response headers
         out.println("HTTP/1.1 200 OK");
         out.println("Content-Type: text/html");
-        out.println(); // Blank line indicating end of headers
+        out.println();
 
         // Write HTML content
         out.println("<html><body>");
@@ -66,31 +81,23 @@ public class LottoWebServer {
         out.println("<p>" + lottoNumbers.toString() + "</p>");
         out.println("</body></html>");
 
-        out.flush(); // Flush the output stream
+        out.flush();
     }
 
     private static void handleNotFoundResponse(PrintWriter out) {
-        // Write HTTP response headers
         out.println("HTTP/1.1 404 Not Found");
         out.println("Content-Type: text/plain");
-        out.println(); // Blank line indicating end of headers
-
-        // Write message body
+        out.println();
         out.println("404 Not Found");
-
-        out.flush(); // Flush the output stream
+        out.flush();
     }
 
     private static void handleMethodNotAllowed(PrintWriter out) {
-        // Write HTTP response headers
         out.println("HTTP/1.1 405 Method Not Allowed");
         out.println("Content-Type: text/plain");
-        out.println(); // Blank line indicating end of headers
-
-        // Write message body
+        out.println();
         out.println("405 Method Not Allowed");
-
-        out.flush(); // Flush the output stream
+        out.flush();
     }
 
     private static String generateLottoNumbers() {
